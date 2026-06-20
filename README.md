@@ -26,10 +26,14 @@ Além da mecânica tradicional, o jogo conta com três níveis de dificuldade, f
 [https://github.com/user-attachments/assets/33d45468-b1e4-40d1-9d47-26aed71850c1](https://youtu.be/ZPtFQ2fvXMY)
 
 
---> TELA DE INICIO
-<img width="1165" height="934" alt="{6A22C989-9783-4ECD-B9F9-F05151C5B24D}" src="https://github.com/user-attachments/assets/4d62574b-0b22-4b92-9c76-bb4354e323d6" />
+--> TELA DE RANK MODO MÉDIO
+<img width="798" height="634" alt="{8E54D51E-4129-449B-ABC8-803085FABAD6}" src="https://github.com/user-attachments/assets/23f8b967-ce94-4cc1-bc13-075b56fb5a66" />
 
-<!-- Dica: você também pode colocar um GIF ou um print do jogo aqui, por exemplo: -->
+--> TELA DE RANK MODO DIFICIL
+<img width="794" height="635" alt="{4E99FC87-E930-464B-8798-A838E6730D63}" src="https://github.com/user-attachments/assets/7fdd5ba1-f024-46c5-a830-acddd0b40ccc" />
+
+--> TELA DE GAME COM CONTATDOR DE VELOCIDADE, TAMANHO E FRUTAS  
+<img width="798" height="637" alt="{7422A398-89B5-45CA-95F4-4A244B61EACB}" src="https://github.com/user-attachments/assets/7b82fec0-511f-431d-ab42-0b9e962c84e0" />
 
 ---
 
