@@ -1,4 +1,4 @@
-<img width="1165" height="934" alt="{6A22C989-9783-4ECD-B9F9-F05151C5B24D}" src="https://github.com/user-attachments/assets/bd888ccd-ee86-4003-b1b0-299572a6520b" /># 🐍👨🏻‍💻 SNAKE GAME
+# 🐍👨🏻‍💻 SNAKE GAME
 
 Releitura do clássico jogo da cobrinha desenvolvida em **Python** com a biblioteca **Pygame**, como projeto da disciplina de **Algoritmos e Programação**.
 
