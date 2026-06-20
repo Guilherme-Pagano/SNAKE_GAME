@@ -54,28 +54,29 @@ def carregar_scores(arquivo):
             if not linha:
                 continue
             if "|" in linha:
-                partes = linha.split("|", 1)
+                partes = linha.split("|")
                 if partes[1].isdigit():
-                    scores.append((partes[0], int(partes[1])))
+                    nivel = int(partes[2]) if len(partes) >= 3 and partes[2].isdigit() else 1
+                    scores.append((partes[0], int(partes[1]), nivel))
             elif linha.isdigit():
-                scores.append(("---", int(linha)))
+                scores.append(("---", int(linha), 1))
     scores.sort(key=lambda e: e[1], reverse=True)
     return scores[:MAX_SCORES]
 
 
 def salvar_scores(scores, arquivo):
     with open(arquivo, "w", encoding="utf-8") as f:
-        for nick, pts in scores:
-            f.write(f"{nick}|{pts}\n")
+        for nick, pts, nivel in scores:
+            f.write(f"{nick}|{pts}|{nivel}\n")
 
 
 def qualifica_top10(pontuacao, scores):
     return len(scores) < MAX_SCORES or (scores and pontuacao > scores[-1][1])
 
 
-def atualizar_scores(pontuacao, nick, scores, arquivo):
+def atualizar_scores(pontuacao, nick, nivel, scores, arquivo):
     eh_novo_recorde = (not scores) or (pontuacao > scores[0][1])
-    scores = sorted(scores + [(nick, pontuacao)], key=lambda e: e[1], reverse=True)[:MAX_SCORES]
+    scores = sorted(scores + [(nick, pontuacao, nivel)], key=lambda e: e[1], reverse=True)[:MAX_SCORES]
     salvar_scores(scores, arquivo)
     return scores, eh_novo_recorde
 
@@ -461,7 +462,7 @@ def desenhar_hud(tela, f_hud, pontuacao, nivel, recorde, fase=1, dificuldade="me
 _OPCOES_PAUSE = ["VER SCORE", "REINICIAR", "MENU INICIAL"]
 
 
-def desenhar_pause(tela, opcao_sel):
+def desenhar_pause(tela, opcao_sel, cobinha_menu=None):
     """Overlay de pausa com menu de 3 opcoes navegaveis."""
     overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
     overlay.fill((0, 20, 0, 200))
@@ -484,10 +485,14 @@ def desenhar_pause(tela, opcao_sel):
     y += 10
     blit_centro(tela, f_dica.render("P - CONTINUAR", True, (80, 80, 80)), y)
 
+    if cobinha_menu is not None:
+        cobinha_menu.update()
+        cobinha_menu.draw(tela)
+
     pygame.display.flip()
 
 
-def desenhar_scores_pause(tela, scores):
+def desenhar_scores_pause(tela, scores, dificuldade="medio"):
     """Mostra o top 10 dentro do menu de pausa."""
     overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
     overlay.fill((0, 20, 0, 215))
@@ -497,19 +502,41 @@ def desenhar_scores_pause(tela, scores):
     f_rank   = fonte(9)
     f_dica   = fonte(8)
 
-    y = 60
-    blit_centro(tela, f_titulo.render("--- TOP 10 ---", True, AMARELO), y)
-    y += 38
+    _titulos_rank = {"medio": "RANKING MODO MEDIO", "dificil": "RANKING MODO DIFICIL"}
+    titulo_rank = _titulos_rank.get(dificuldade, "--- TOP 10 ---")
 
-    X_RANK = 80
-    X_NICK = 130
-    X_PTS  = 530
+    f_sub = fonte(9)
+
+    y = 60
+    blit_centro(tela, f_titulo.render(titulo_rank, True, AMARELO), y)
+    y += 28
+    blit_centro(tela, f_sub.render("( TOP 10 )", True, CINZA), y)
+    y += 22
+
+    X_RANK = 55
+    X_NICK = 105
+    X_LVL  = 440
+    X_PTS  = 590
     cores_pos = [AMARELO, PRATA, BRONZE]
 
-    for i, (nick, pts) in enumerate(scores):
+    f_leg = fonte(7)
+    COR_LEG = (100, 100, 100)
+    tela.blit(f_leg.render("N",     True, COR_LEG), (X_RANK, y))
+    tela.blit(f_leg.render("NICK",  True, COR_LEG), (X_NICK, y))
+    s_lh = f_leg.render("LEVEL", True, COR_LEG)
+    tela.blit(s_lh, (X_LVL - s_lh.get_width(), y))
+    s_ph = f_leg.render("PTS",   True, COR_LEG)
+    tela.blit(s_ph, (X_PTS - s_ph.get_width(), y))
+    y += 14
+    pygame.draw.line(tela, COR_LEG, (X_RANK, y), (X_PTS, y), 1)
+    y += 6
+
+    for i, (nick, pts, nivel) in enumerate(scores):
         cor = cores_pos[i] if i < 3 else CINZA
         tela.blit(f_rank.render(f"#{i+1}", True, cor), (X_RANK, y))
         tela.blit(f_rank.render(nick[:MAX_NICK], True, cor), (X_NICK, y))
+        s_lv = f_rank.render(f"LV:{nivel}", True, cor)
+        tela.blit(s_lv, (X_LVL - s_lv.get_width(), y))
         s = f_rank.render(f"{pts}pts", True, cor)
         tela.blit(s, (X_PTS - s.get_width(), y))
         y += 19
@@ -583,7 +610,7 @@ def desenhar_tela_inicial(tela, scores):
     blit_centro(tela, fonte(28).render("SNAKE", True, BG_CLARO), 100)
 
     if scores:
-        nick_top, pts_top = scores[0]
+        nick_top, pts_top, *_ = scores[0]
         blit_centro(tela, fonte(14).render(f"REC: {pts_top}", True, AMARELO), 175)
         blit_centro(tela, fonte(10).render(f"by {nick_top}", True, CINZA), 200)
     else:
@@ -612,7 +639,7 @@ def capturar_nick(tela, pontuacao, eh_novo_recorde):
     overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
     overlay.fill((0, 0, 0, 215))
 
-    titulo_txt = "** NOVO RECORDE! **" if eh_novo_recorde else "VOCE NO TOP 10!"
+    titulo_txt = "** NOVO RECORDE! **" if eh_novo_recorde else "PARABENS! VOCE ESTA NO TOP 10!"
     titulo_cor = AMARELO if eh_novo_recorde else AZUL
 
     relogio = pygame.time.Clock()
@@ -662,41 +689,57 @@ def capturar_nick(tela, pontuacao, eh_novo_recorde):
 # Tela de game over
 # ============================================================
 
-def desenhar_game_over(tela, pontuacao, scores, novo_recorde):
-    overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 205))
-    tela.blit(overlay, (0, 0))
+def desenhar_game_over(tela, pontuacao, scores, novo_recorde, dificuldade="medio"):
+    tela.fill(PRETO)
 
-    f_titulo = fonte(28)
+    f_titulo = fonte(18)
     f_medio  = fonte(12)
     f_small  = fonte(9)
     f_rank   = fonte(9)
 
-    y = 20
-    blit_centro(tela, f_titulo.render("GAME OVER", True, VERMELHO), y)
+    _titulos_rank = {"medio": "RANKING MODO MEDIO", "dificil": "RANKING MODO DIFICIL"}
+    titulo_rank = _titulos_rank.get(dificuldade, "--- TOP 10 ---")
+    _cores_titulo = {"medio": AMARELO, "dificil": VERMELHO}
+    cor_titulo = _cores_titulo.get(dificuldade, AZUL)
 
-    y += 60
+    y = 30
+    blit_centro(tela, f_titulo.render(titulo_rank, True, cor_titulo), y)
+    y += 30
+    blit_centro(tela, f_small.render("( TOP 10 )", True, CINZA), y)
+    y += 24
+
     blit_centro(tela, f_medio.render(f"PONTOS: {pontuacao}", True, BRANCO), y)
-
-    y += 34
+    y += 30
     if novo_recorde:
         blit_centro(tela, f_medio.render("** NOVO RECORDE! **", True, AMARELO), y)
-        y += 34
+        y += 30
 
-    blit_centro(tela, f_small.render("--- TOP 10 ---", True, AZUL), y)
-    y += 22
-
-    X_RANK = 80
-    X_NICK = 130
-    X_PTS  = 530
+    X_RANK = 55
+    X_NICK = 105
+    X_LVL  = 440
+    X_PTS  = 590
     cores_pos = [AMARELO, PRATA, BRONZE]
 
-    for i, (nick, s) in enumerate(scores):
+    f_leg = fonte(7)
+    COR_LEG = (100, 100, 100)
+    tela.blit(f_leg.render("N",     True, COR_LEG), (X_RANK, y))
+    tela.blit(f_leg.render("NICK",  True, COR_LEG), (X_NICK, y))
+    s_lh = f_leg.render("LEVEL", True, COR_LEG)
+    tela.blit(s_lh, (X_LVL - s_lh.get_width(), y))
+    s_ph = f_leg.render("PTS",   True, COR_LEG)
+    tela.blit(s_ph, (X_PTS - s_ph.get_width(), y))
+    y += 14
+    pygame.draw.line(tela, COR_LEG, (X_RANK, y), (X_PTS, y), 1)
+    y += 6
+
+    for i, (nick, s, nivel) in enumerate(scores):
         cor = cores_pos[i] if i < 3 else CINZA
         if novo_recorde and i == 0 and s == pontuacao:
             cor = AMARELO
         tela.blit(f_rank.render(f"#{i+1}",      True, cor), (X_RANK, y))
         tela.blit(f_rank.render(nick[:MAX_NICK], True, cor), (X_NICK, y))
+        s_lv = f_rank.render(f"LV:{nivel}", True, cor)
+        tela.blit(s_lv, (X_LVL - s_lv.get_width(), y))
         s_pts = f_rank.render(f"{s}pts", True, cor)
         tela.blit(s_pts, (X_PTS - s_pts.get_width(), y))
         y += 18
@@ -813,7 +856,7 @@ def _flash_fase(tela, relogio, fase, num_frutas):
 # ============================================================
 
 def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar,
-            sprites_cab, img_corpo, dificuldade="medio"):
+            sprites_cab, img_corpo, dificuldade="medio", cobinha_menu=None):
     corpo        = [(COLUNAS // 2, LINHAS // 2)]
     direcao      = DIREITA
     prox_direcao = DIREITA
@@ -877,9 +920,9 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
 
         if pausado:
             if ver_score:
-                desenhar_scores_pause(tela, scores)
+                desenhar_scores_pause(tela, scores, dificuldade)
             else:
-                desenhar_pause(tela, opcao_pause)
+                desenhar_pause(tela, opcao_pause, cobinha_menu)
             relogio.tick(30)
             continue
 
@@ -1074,7 +1117,8 @@ def main():
             recorde_atual = scores[0][1] if scores else 0
             acao, pontuacao = partida(
                 tela, relogio, f_hud, recorde_atual, scores,
-                som_morte, som_mastigar, sprites_cab, img_corpo, dificuldade
+                som_morte, som_mastigar, sprites_cab, img_corpo, dificuldade,
+                cobinha_menu
             )
 
             if acao == ACAO_REINICIAR:
@@ -1091,7 +1135,7 @@ def main():
             if dificuldade != "facil" and qualifica_top10(pontuacao, scores):
                 eh_rec = (not scores) or (pontuacao > scores[0][1])
                 nick   = capturar_nick(tela, pontuacao, eh_rec)
-                scores, novo_recorde = atualizar_scores(pontuacao, nick, scores, arquivo_ativo())
+                scores, novo_recorde = atualizar_scores(pontuacao, nick, nivel_atual(pontuacao), scores, arquivo_ativo())
                 if dificuldade == "dificil":
                     scores_dificil = scores
                 else:
@@ -1102,7 +1146,7 @@ def main():
 
         # ======== GAME OVER ========
         if estado == "gameover":
-            desenhar_game_over(tela, pontuacao, scores_ativos(), novo_recorde)
+            desenhar_game_over(tela, pontuacao, scores_ativos(), novo_recorde, dificuldade)
             while True:
                 relogio.tick(30)
                 for evento in pygame.event.get():

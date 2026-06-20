@@ -1,3 +1,10 @@
-Pagano|250
-Anonimo|10
-Anonimo|0
+Anonimo|700|15
+top|410|9
+Pagano|250|1
+Anonimo|100|3
+legal|80|2
+gg|50|2
+Anonimo|10|1
+alan|10|1
+Anonimo|0|1
+Anonimo|0|1
