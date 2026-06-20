@@ -26,6 +26,7 @@ Além da mecânica tradicional, o jogo conta com três níveis de dificuldade, f
 > 🎥 **Vídeo demonstrativo:
 
 🐍 Projeto SNAKE_GAME
+
 https://github.com/user-attachments/assets/0bc9ddd6-2136-48de-a1b1-e4f4969bc5e9
 
 [![🐍 Projeto SNAKE_GAME | Python + Pygame]([https://youtube.com](https://github.com/user-attachments/assets/33d45468-b1e4-40d1-9d47-26aed71850c1)](https://youtu.be/ZPtFQ2fvXMY)
