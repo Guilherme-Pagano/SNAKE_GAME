@@ -1,4 +1,4 @@
-# 🐍👨🏻‍💻 SNAKE GAME
+<img width="1165" height="934" alt="{6A22C989-9783-4ECD-B9F9-F05151C5B24D}" src="https://github.com/user-attachments/assets/bd888ccd-ee86-4003-b1b0-299572a6520b" /># 🐍👨🏻‍💻 SNAKE GAME
 
 Releitura do clássico jogo da cobrinha desenvolvida em **Python** com a biblioteca **Pygame**, como projeto da disciplina de **Algoritmos e Programação**.
 
@@ -24,6 +24,9 @@ Além da mecânica tradicional, o jogo conta com três níveis de dificuldade, f
 
 > 🎥 **Vídeo demonstrativo:
 --link_video---
+--> TELA DE INICIO
+<img width="1165" height="934" alt="{6A22C989-9783-4ECD-B9F9-F05151C5B24D}" src="https://github.com/user-attachments/assets/4d62574b-0b22-4b92-9c76-bb4354e323d6" />
+
 <!-- Dica: você também pode colocar um GIF ou um print do jogo aqui, por exemplo: -->
 
 ---
