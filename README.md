@@ -23,6 +23,7 @@ Além da mecânica tradicional, o jogo conta com três níveis de dificuldade, f
 ## 🎬 Demonstração
 
 > 🎥 **Vídeo demonstrativo:
+
 [https://github.com/user-attachments/assets/33d45468-b1e4-40d1-9d47-26aed71850c1](https://youtu.be/ZPtFQ2fvXMY)
 
 
