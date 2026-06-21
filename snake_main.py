@@ -15,6 +15,7 @@ CAMINHO_MUSICA_MENU = os.path.join(_DIR, "music_game_8bit-menu.mp3")
 CAMINHO_SOM_MORTE     = os.path.join(_DIR, "music_dead.mp3")
 CAMINHO_SOM_MASTIGAR  = os.path.join(_DIR, "music_mastigar.mp3")
 CAMINHO_SOM_RECORDE   = os.path.join(_DIR, "music_new_record.mp3")
+CAMINHO_SOM_BOMBA     = os.path.join(_DIR, "Explosão_Bomba.mp3")
 MAX_SCORES = 10
 MAX_NICK   = 12
 
@@ -774,8 +775,8 @@ def desenhar_game_over(tela, pontuacao, scores, novo_recorde, dificuldade="medio
 
 _DIFICULDADES = [
     ("FACIL",   (80, 220, 80),  "SEM RANKING  |  1 FRUTA  |  VELOCIDADE FIXA"),
-    ("MEDIO",   AMARELO,        "RANKING  |  +1 FRUTA/200PTS  |  VEL. CRESCE"),
-    ("DIFICIL", VERMELHO,       "RANKING  |  BOMBA APOS 200PTS  |  +1 FRUTA/200PTS"),
+    ("MEDIO",   AMARELO,        "RANKING  |  +1 FRUTA/200PTS  |  VEL. CRESCE |  LIMITE DE FRUTAS: 3 |"),
+    ("DIFICIL", VERMELHO,       "RANKING  |  BOMBA APOS 200PTS  |  +1 FRUTA/200PTS |  LIMITE DE FRUTAS: 3 |"),
 ]
 _DIFIC_IDS = ["facil", "medio", "dificil"]
 
@@ -872,7 +873,7 @@ def _flash_fase(tela, relogio, fase, num_frutas):
 # ============================================================
 
 def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar,
-            sprites_cab, img_corpo, dificuldade="medio", cobinha_menu=None):
+            sprites_cab, img_corpo, dificuldade="medio", cobinha_menu=None, som_bomba=None):
     corpo        = [(COLUNAS // 2, LINHAS // 2)]
     direcao      = DIREITA
     prox_direcao = DIREITA
@@ -969,7 +970,7 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
             som_morte.play()
             return (ACAO_GAMEOVER, pontuacao)
         if nova_cabeca in {p for p, _ in bombas}:
-            som_morte.play()
+            (som_bomba if som_bomba else som_morte).play()
             return (ACAO_GAMEOVER, pontuacao)
 
         corpo.insert(0, nova_cabeca)
@@ -1069,6 +1070,8 @@ def main():
     som_mastigar.set_volume(0.7)
     som_recorde    = pygame.mixer.Sound(CAMINHO_SOM_RECORDE)
     som_recorde.set_volume(1.0)
+    som_bomba      = pygame.mixer.Sound(CAMINHO_SOM_BOMBA)
+    som_bomba.set_volume(0.9)
     sprites_cab, img_corpo = criar_sprites_cobra(TAMANHO_CELULA)
     scores_medio   = carregar_scores(ARQUIVO_SCORES_MEDIO)
     scores_dificil = carregar_scores(ARQUIVO_SCORES_DIFICIL)
@@ -1136,7 +1139,7 @@ def main():
             acao, pontuacao = partida(
                 tela, relogio, f_hud, recorde_atual, scores,
                 som_morte, som_mastigar, sprites_cab, img_corpo, dificuldade,
-                cobinha_menu
+                cobinha_menu, som_bomba
             )
 
             if acao == ACAO_REINICIAR:
