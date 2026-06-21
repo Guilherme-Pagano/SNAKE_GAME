@@ -90,10 +90,10 @@ AREA_JOGO_Y    = 44
 BORDA_LATERAL  = 20
 FPS_BASE         = 4
 BOMBA_DURACAO    = 8000
-BOMBA_MIN_SCORE  = 400
+BOMBA_MIN_SCORE  = 200
 FRUTA_DURACAO    = 16000  # ms que cada fruta fica na tela no modo dificil
 
-TAMANHO_POR_DIFIC = {"facil": 50, "medio": 40, "dificil": 30}
+TAMANHO_POR_DIFIC = {"facil": 50, "medio": 40, "dificil": 40}
 
 # Valores iniciais (atualizados por aplicar_dificuldade antes de cada partida)
 TAMANHO_CELULA = 40
@@ -187,15 +187,15 @@ def sortear_fruta():
 
 
 def fps_atual(pontuacao):
-    return min(8, FPS_BASE + (pontuacao // 150))
+    return min(8, FPS_BASE + ((nivel_atual(pontuacao) - 1) // 3))
 
 
 def nivel_atual(pontuacao):
-    return (pontuacao // 50) + 1
+    return (pontuacao // 100) + 1
 
 
 def frutas_por_score(pontuacao):
-    return 1 + (pontuacao // 200)
+    return min(3, 1 + (pontuacao // 200))
 
 
 def fonte(tamanho):
@@ -462,8 +462,11 @@ def desenhar_hud(tela, f_hud, pontuacao, nivel, recorde, fase=1, dificuldade="me
 _OPCOES_PAUSE = ["VER SCORE", "REINICIAR", "MENU INICIAL"]
 
 
-def desenhar_pause(tela, opcao_sel, cobinha_menu=None):
-    """Overlay de pausa com menu de 3 opcoes navegaveis."""
+def desenhar_pause(tela, opcao_sel, cobinha_menu=None, opcoes=None):
+    """Overlay de pausa com menu de opcoes navegaveis."""
+    if opcoes is None:
+        opcoes = _OPCOES_PAUSE
+
     overlay = pygame.Surface((LARGURA, ALTURA), pygame.SRCALPHA)
     overlay.fill((0, 20, 0, 200))
     tela.blit(overlay, (0, 0))
@@ -476,7 +479,7 @@ def desenhar_pause(tela, opcao_sel, cobinha_menu=None):
     blit_centro(tela, f_titulo.render("- PAUSA -", True, VERDE_HUD), y)
     y += 55
 
-    for i, txt in enumerate(_OPCOES_PAUSE):
+    for i, txt in enumerate(opcoes):
         cor = AMARELO if i == opcao_sel else CINZA
         prefixo = "> " if i == opcao_sel else "  "
         blit_centro(tela, f_item.render(prefixo + txt, True, cor), y)
@@ -695,6 +698,19 @@ def desenhar_game_over(tela, pontuacao, scores, novo_recorde, dificuldade="medio
     f_titulo = fonte(18)
     f_medio  = fonte(12)
     f_small  = fonte(9)
+
+    if dificuldade == "facil":
+        y = 200
+        blit_centro(tela, f_titulo.render("GAME OVER", True, VERMELHO), y)
+        y += 55
+        blit_centro(tela, f_medio.render(f"PONTOS: {pontuacao}", True, BRANCO), y)
+        y += 65
+        blit_centro(tela, f_small.render("ENTER - JOGAR NOVAMENTE", True, VERDE_HUD), y)
+        y += 22
+        blit_centro(tela, f_small.render("ESC - MENU INICIAL", True, CINZA), y)
+        pygame.display.flip()
+        return
+
     f_rank   = fonte(9)
 
     _titulos_rank = {"medio": "RANKING MODO MEDIO", "dificil": "RANKING MODO DIFICIL"}
@@ -759,7 +775,7 @@ def desenhar_game_over(tela, pontuacao, scores, novo_recorde, dificuldade="medio
 _DIFICULDADES = [
     ("FACIL",   (80, 220, 80),  "SEM RANKING  |  1 FRUTA  |  VELOCIDADE FIXA"),
     ("MEDIO",   AMARELO,        "RANKING  |  +1 FRUTA/200PTS  |  VEL. CRESCE"),
-    ("DIFICIL", VERMELHO,       "RANKING  |  BOMBA APOS 400PTS  |  +1 FRUTA/200PTS"),
+    ("DIFICIL", VERMELHO,       "RANKING  |  BOMBA APOS 200PTS  |  +1 FRUTA/200PTS"),
 ]
 _DIFIC_IDS = ["facil", "medio", "dificil"]
 
@@ -877,6 +893,7 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
     pausado     = False
     opcao_pause = 0
     ver_score   = False
+    opcoes_pause = ["REINICIAR", "MENU INICIAL"] if dificuldade == "facil" else _OPCOES_PAUSE
 
     while True:
         agora = pygame.time.get_ticks()
@@ -895,16 +912,17 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
                             pausado = False
                             parar_musica()
                         elif evento.key in (pygame.K_UP, pygame.K_w):
-                            opcao_pause = (opcao_pause - 1) % len(_OPCOES_PAUSE)
+                            opcao_pause = (opcao_pause - 1) % len(opcoes_pause)
                         elif evento.key in (pygame.K_DOWN, pygame.K_s):
-                            opcao_pause = (opcao_pause + 1) % len(_OPCOES_PAUSE)
+                            opcao_pause = (opcao_pause + 1) % len(opcoes_pause)
                         elif evento.key == pygame.K_RETURN:
-                            if opcao_pause == 0:
+                            txt_sel = opcoes_pause[opcao_pause]
+                            if txt_sel == "VER SCORE":
                                 ver_score = True
-                            elif opcao_pause == 1:
+                            elif txt_sel == "REINICIAR":
                                 parar_musica()
                                 return (ACAO_REINICIAR, 0)
-                            elif opcao_pause == 2:
+                            elif txt_sel == "MENU INICIAL":
                                 parar_musica()
                                 return (ACAO_MENU, 0)
                 else:
@@ -922,7 +940,7 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
             if ver_score:
                 desenhar_scores_pause(tela, scores, dificuldade)
             else:
-                desenhar_pause(tela, opcao_pause, cobinha_menu)
+                desenhar_pause(tela, opcao_pause, cobinha_menu, opcoes_pause)
             relogio.tick(30)
             continue
 
