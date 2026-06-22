@@ -136,7 +136,7 @@ COBRA_CORPO = (25,  90,  25)
 
 FRUTAS = [
     {"forma": "maca",   "cor": VERMELHO, "brilho": AMARELO, "pontos": 10, "peso": 60},
-    {"forma": "banana", "cor": AMARELO,  "brilho": BRANCO,  "pontos": 20, "peso": 40},
+    {"forma": "banana", "cor": AMARELO,  "brilho": BRANCO,  "pontos": 30, "peso": 40},
     {"forma": "uva",    "cor": ROXO,     "brilho": (200, 140, 255), "pontos": 50, "peso": 20},
 ]
 
@@ -435,20 +435,26 @@ def desenhar_stats_overlay(tela, fps, tamanho_cobra, num_frutas_tela):
         y += lh + 4
 
 
-def desenhar_hud(tela, f_hud, pontuacao, nivel, recorde, fase=1, dificuldade="medio"):
+def desenhar_hud(tela, f_hud, pontuacao, nivel, recorde, fase=1, dificuldade="medio", tempo_str=None):
     pygame.draw.rect(tela, HUD_BG, (0, 0, LARGURA, AREA_JOGO_Y))
     pygame.draw.line(tela, HUD_BORDA, (0, AREA_JOGO_Y - 1), (LARGURA, AREA_JOGO_Y - 1))
 
     _cores_dif  = {"facil": (80, 220, 80), "medio": AMARELO, "dificil": VERMELHO}
-    _labels_dif = {"facil": "FAC", "medio": "MED", "dificil": "DIF"}
+    _labels_dif = {"facil": "DIFFICULTY: EASY", "medio": "DIFFICULTY: AVERAGE", "dificil": "DIFFICULTY: HARD"}
     cor_dif   = _cores_dif.get(dificuldade, CINZA)
     label_dif = _labels_dif.get(dificuldade, "???")
     s_dif = f_hud.render(label_dif, True, cor_dif)
     tela.blit(s_dif, (8, 14))
-    tela.blit(f_hud.render(f"PT:{pontuacao}", True, VERDE_HUD), (8 + s_dif.get_width() + 6, 14))
+    tela.blit(f_hud.render(f"SCORE:{pontuacao}", True, VERDE_HUD), (8 + s_dif.get_width() + 6, 14))
 
-    s_rec = f_hud.render(f"REC:{recorde}", True, AMARELO)
+    s_rec = f_hud.render(f"RECORD:{recorde}", True, AMARELO)
     blit_centro(tela, s_rec, 14)
+
+    if tempo_str:
+        s_tempo = f_hud.render(f"TIME:{tempo_str}", True, AZUL)
+        timer_x = LARGURA // 2 + s_rec.get_width() // 2 + 14
+        tela.blit(s_tempo, (timer_x, 14))
+
     s_niv = f_hud.render(f"LVL:{nivel}", True, CINZA)
     tela.blit(s_niv, (LARGURA - s_niv.get_width() - 8, 14))
     if fase > 1:
@@ -896,6 +902,10 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
     ver_score   = False
     opcoes_pause = ["REINICIAR", "MENU INICIAL"] if dificuldade == "facil" else _OPCOES_PAUSE
 
+    tempo_inicio     = pygame.time.get_ticks()
+    tempo_pausado    = 0
+    _pausa_ini       = None
+
     while True:
         agora = pygame.time.get_ticks()
 
@@ -911,6 +921,9 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
                     else:
                         if evento.key == pygame.K_p:
                             pausado = False
+                            if _pausa_ini is not None:
+                                tempo_pausado += agora - _pausa_ini
+                                _pausa_ini = None
                             parar_musica()
                         elif evento.key in (pygame.K_UP, pygame.K_w):
                             opcao_pause = (opcao_pause - 1) % len(opcoes_pause)
@@ -931,6 +944,7 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
                         pausado     = True
                         opcao_pause = 0
                         ver_score   = False
+                        _pausa_ini  = agora
                         tocar_musica_menu()
                     else:
                         nova_dir = TECLAS.get(evento.key)
@@ -1036,6 +1050,9 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
 
         fps = FPS_BASE if dificuldade == "facil" else fps_atual(pontuacao)
 
+        seg = (agora - tempo_inicio - tempo_pausado) // 1000
+        tempo_str = f"{seg // 60:02d}:{seg % 60:02d}"
+
         desenhar_fundo(tela)
         desenhar_cobra(tela, corpo, direcao, sprites_cab, img_corpo)
         for pos, fruta in itens:
@@ -1045,7 +1062,7 @@ def partida(tela, relogio, f_hud, recorde_atual, scores, som_morte, som_mastigar
         for b_pos, b_spawn in bombas:
             desenhar_bomba_mapa(tela, b_pos, b_spawn)
         desenhar_hud(tela, f_hud, pontuacao, nivel_atual(pontuacao),
-                     max(recorde_atual, pontuacao), fase, dificuldade)
+                     max(recorde_atual, pontuacao), fase, dificuldade, tempo_str)
         if pygame.key.get_pressed()[pygame.K_c]:
             desenhar_stats_overlay(tela, fps, len(corpo), len(itens))
         pygame.display.flip()
